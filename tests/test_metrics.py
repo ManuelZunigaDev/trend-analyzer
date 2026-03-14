@@ -2,7 +2,6 @@
 import streamlit as st
 import pandas as pd
  
-# ── Config (debe ir antes de cualquier otro st.*)
 st.set_page_config(
     page_title="Trend Analyzer",
     page_icon="📈",
@@ -25,10 +24,8 @@ from src.forecaster import run_prophet, get_changepoints
 from src.exporter   import to_csv, to_excel
 from src.insights   import build_insights_section
  
-# ── CSS global
 inject_css()
  
-# ── Sidebar → parámetros
 params = render_sidebar()
 keywords      = params["keywords"]
 timeframe     = params["timeframe"]
@@ -38,7 +35,6 @@ horizon       = params["horizon"]
 show_table    = params["show_table"]
 show_related  = params["show_related"]
  
-# ── Hero
 st.markdown("""
 <div class="hero">
   <h1>Trend Analyzer</h1>
@@ -46,8 +42,8 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
  
-# ── Empty state
 if not keywords:
+
     st.markdown("""
     <div class="empty-state">
       <div style="font-size:3rem;margin-bottom:1rem">📡</div>
@@ -57,11 +53,12 @@ if not keywords:
     """, unsafe_allow_html=True)
     st.stop()
  
-# ── Tags de keywords
 tags_html = " ".join(tag_html(kw, i) for i, kw in enumerate(keywords))
+
 st.markdown(f"<div style='margin-bottom:1.5rem'>{tags_html}</div>", unsafe_allow_html=True)
  
-# ── Fetch datos
+
+
 with st.spinner("Consultando Google Trends…"):
     try:
         data = fetch_trends(tuple(keywords), timeframe, geo)
@@ -75,17 +72,16 @@ if data.empty:
  
 available_kws = [k for k in keywords if k in data.columns]
  
-# ── Métricas
 metrics_data = {kw: compute_metrics(data[kw]) for kw in available_kws}
  
 st.markdown('<div class="section-title">📊 Métricas clave</div>', unsafe_allow_html=True)
 render_metric_cards(data, available_kws, metrics_data)
  
-# ── Gráfica histórica
 st.markdown('<div class="section-title">📈 Tendencia histórica</div>', unsafe_allow_html=True)
 render_historical(data, available_kws, timeframe_label)
- 
-# ── Predicción Prophet
+
+
+
 st.markdown(f'<div class="section-title">🔮 Predicción · próximas {horizon} semanas</div>',
             unsafe_allow_html=True)
  
@@ -102,25 +98,26 @@ for i, kw in enumerate(available_kws):
     changepoints = get_changepoints(fc, data[kw])
     render_forecast(kw, data, fc, COLORS[i % len(COLORS)], changepoints)
  
-# ── Radar de comparación
 if len(available_kws) > 1:
+
     st.markdown('<div class="section-title">🕸️ Comparación global</div>', unsafe_allow_html=True)
     render_radar(available_kws, metrics_data)
  
-# ── Correlación (solo si hay ≥ 2 keywords)
 if len(available_kws) >= 2:
     st.markdown('<div class="section-title">🔗 Correlación entre keywords</div>',
                 unsafe_allow_html=True)
     corr = compute_correlation_matrix(data, available_kws)
     render_correlation_heatmap(corr)
- 
-# ── Insights automáticos
+
+
 st.markdown('<div class="section-title">💡 Insights automáticos</div>', unsafe_allow_html=True)
 bullets = build_insights_section(data, available_kws, forecast_dfs, horizon)
 for bullet in bullets:
     st.markdown(f'<div class="insight-box">{bullet}</div>', unsafe_allow_html=True)
  
-# ── Búsquedas relacionadas (opcional)
+
+
+
 if show_related and len(available_kws) == 1:
     kw = available_kws[0]
     st.markdown('<div class="section-title">🔍 Búsquedas relacionadas</div>', unsafe_allow_html=True)
@@ -136,15 +133,16 @@ if show_related and len(available_kws) == 1:
         if related["rising"] is not None:
             st.dataframe(related["rising"], use_container_width=True, height=200)
  
-# ── Tabla de datos
 if show_table:
     st.markdown('<div class="section-title">🗂️ Datos históricos</div>', unsafe_allow_html=True)
     st.dataframe(
         data[available_kws].style.background_gradient(cmap="Blues", axis=0),
         use_container_width=True, height=300,
     )
- 
-# ── Exportar
+
+
+
+
 st.markdown('<div class="section-title">⬇️ Exportar datos</div>', unsafe_allow_html=True)
 col_a, col_b, col_c = st.columns([1, 1, 4])
 with col_a:
@@ -154,4 +152,3 @@ with col_b:
     st.download_button("📊 Excel", data=to_excel(data, available_kws),
                        file_name="tendencias.xlsx",
                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
- 
