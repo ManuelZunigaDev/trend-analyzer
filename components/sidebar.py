@@ -32,7 +32,7 @@ def render_sidebar() -> dict:
                   geo (str), horizon (int), show_table (bool), show_related (bool).
     """
     with st.sidebar:
-        st.markdown("## ⚙️ Configuración")
+        st.markdown("## Configuración")
         st.markdown("---")
  
         raw_input = st.text_input(

@@ -37,7 +37,6 @@ def compute_metrics(series: pd.Series) -> dict:
         score=score,
     )
  
- 
 def compute_correlation_matrix(data: pd.DataFrame, keywords: list) -> pd.DataFrame:
     """
     Calcula la matriz de correlación de Pearson entre keywords.
@@ -78,3 +77,5 @@ def generate_insight(kw: str, metrics: dict, horizon: int, forecast_end: float) 
         f"El modelo predice una {forecast_dir} en las próximas {horizon} semanas "
         f"(score de tendencia: {metrics['score']}/100)."
     )
+
+    

@@ -3,12 +3,10 @@ import plotly.graph_objects as go
 import streamlit as st
  
 
- #date format
 COLORS = ["#6c7aff", "#f472b6", "#34d399", "#fbbf24", "#f87171"]
  
  
 
- #eleccion del tema no necesario solo por estetica, se puede eliminar y usar el tema por defecto de plotly
 def _theme() -> dict:
     """Devuelve el dict de layout compartido para todos los gráficos."""
     return dict(
@@ -53,18 +51,16 @@ def render_forecast(kw: str, data: pd.DataFrame, fc: pd.DataFrame,
     de puntos de cambio de tendencia.
     """
     r, g, b = int(color[1:3], 16), int(color[3:5], 16), int(color[5:7], 16)
-    hist_end  = data.index[-1]
+    hist_end  = str(data.index[-1])
     fc_future = fc[fc["ds"] > pd.Timestamp(hist_end)]
  
     fig = go.Figure()
  
-    # Histórico
     fig.add_trace(go.Scatter(
         x=data.index, y=data[kw], name="Histórico",
         mode="lines", line=dict(color=color, width=2),
     ))
  
-    # Banda de confianza (solo futuro)
     fig.add_trace(go.Scatter(
         x=pd.concat([fc_future["ds"], fc_future["ds"].iloc[::-1]]),
         y=pd.concat([fc_future["yhat_upper"], fc_future["yhat_lower"].iloc[::-1]]),
@@ -73,25 +69,30 @@ def render_forecast(kw: str, data: pd.DataFrame, fc: pd.DataFrame,
         name="Intervalo 80%", hoverinfo="skip",
     ))
  
-    # Línea de predicción (solo futuro)
     fig.add_trace(go.Scatter(
         x=fc_future["ds"], y=fc_future["yhat"], name="Predicción",
         mode="lines", line=dict(color=color, width=2.5, dash="dot"),
         hovertemplate=f"<b>{kw} (pred.)</b><br>%{{x|%d %b %Y}}<br>Estimado: %{{y:.1f}}<extra></extra>",
     ))
  
-    # Línea vertical "Hoy"
-    fig.add_vline(x=hist_end, line_width=1, line_dash="dash",
-                  line_color="#4b5563",
-                  annotation_text="Hoy", annotation_font_color="#9ca3af")
+    fig.add_vline(x=hist_end, line_width=1, line_dash="dash", line_color="#4b5563")
+    fig.add_annotation(
+        x=hist_end, y=1.02, yref="paper",
+        text="Hoy", showarrow=False,
+        font=dict(color="#9ca3af"),
+        xanchor="center", yanchor="bottom"
+    )
  
-    # Puntos de cambio de tendencia
     for cp in changepoints:
         icon  = "▲" if cp["direction"] == "up" else "▼"
         clr   = "#34d399" if cp["direction"] == "up" else "#f87171"
-        fig.add_vline(x=cp["date"], line_width=1, line_dash="dot", line_color=clr,
-                      annotation_text=icon, annotation_font_color=clr,
-                      annotation_position="top left")
+        fig.add_vline(x=cp["date"], line_width=1, line_dash="dot", line_color=clr)
+        fig.add_annotation(
+            x=cp["date"], y=0.98, yref="paper",
+            text=icon, showarrow=False,
+            font=dict(color=clr, size=14),
+            xanchor="left", yanchor="top"
+        )
  
     fig.update_layout(
         title=dict(text=f"<b>{kw}</b> · predicción con intervalos de confianza",
